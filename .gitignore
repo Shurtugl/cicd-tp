@@ -3,5 +3,5 @@ allure-results/
 .aider*
 .allure
 .idea
-node_modules
+node_modules/
 .env
