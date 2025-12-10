@@ -68,7 +68,7 @@ jobs:
         uses: actions/deploy-pages@v4
 
   comment:
-    needs: [tests, deploy_pages]
+    needs: tests
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
 
@@ -79,11 +79,13 @@ jobs:
           script: |
             const success = '${{ needs.tests.outputs.test_result }}' === 'success';
 
-            let reportUrl = 'https://' + context.repo.owner + '.github.io/' + context.repo.repo + '/';
+            let reportUrl = success
+              ? `https://${context.repo.owner}.github.io/${context.repo.repo}/`
+              : null;
 
             let msg = success
               ? `✔️ **Tests réussis** 🎉\n🚀 Rapport Allure disponible : ${reportUrl}`
-              : `❌ **Les tests ont échoué** 😿\n(Vous pouvez télécharger le rapport Allure dans les artifacts).`;
+              : `❌ **Les tests ont échoué** 😿\nVous pouvez télécharger le rapport Allure dans les artifacts.`;
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,

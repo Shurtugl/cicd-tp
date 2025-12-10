@@ -26,8 +26,12 @@ jobs:
         run: npm install -g allure@latest
 
       - name: Run tests with Allure 3
-        id: test-results
+        id: test-step
         run: allure run -- npm test
+
+    outputs:
+      result: ${{ steps.test-step.outcome }}
+
 
       - name: Archive Allure report
         uses: actions/upload-artifact@v4
