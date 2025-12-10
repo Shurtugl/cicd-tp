@@ -1,0 +1,93 @@
+name: Pierrick
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  pull-requests: write
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    outputs:
+      test_result: ${{ steps.test-step.outcome }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js from .nvmrc
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Allure 3
+        run: npm install -g allure@latest
+
+      - name: Run tests with Allure 3
+        id: test-step
+        run: allure run -- npm test
+
+      - name: Upload Allure report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: allure-report
+
+  deploy_pages:
+    needs: tests
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' && needs.tests.outputs.test_result == 'success'
+
+    steps:
+      - name: Download Allure report
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-report
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload static site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: allure-report
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  comment:
+    needs: [tests, deploy_pages]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Post comment to PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const success = '${{ needs.tests.outputs.test_result }}' === 'success';
+
+            let reportUrl = 'https://' + context.repo.owner + '.github.io/' + context.repo.repo + '/';
+
+            let msg = success
+              ? `✔️ **Tests réussis** 🎉\n🚀 Rapport Allure disponible : ${reportUrl}`
+              : `❌ **Les tests ont échoué** 😿\n(Vous pouvez télécharger le rapport Allure dans les artifacts).`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: msg
+            });
