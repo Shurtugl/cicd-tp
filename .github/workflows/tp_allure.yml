@@ -24,8 +24,8 @@ jobs:
       # - name: Lint code
       #   run: npm run lint
       - name: install Allure
-        run: npm install -g allure
-      - name: Run tests with Azure
+        run: npm install -g allure@latest
+      - name: Run tests with allure
         run: allure run -- npm test
       - run: allure generate output/
       - name: Archive Allure report
@@ -33,5 +33,3 @@ jobs:
         with:
           name: allure-report
           path: allure-report
-
-
