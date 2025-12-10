@@ -1,0 +1,65 @@
+name: Pierrick
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js from .nvmrc
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Allure 3
+        run: npm install -g allure@latest
+
+      - name: Run tests with Allure 3
+        id: test-step
+        run: |
+          allure run -- npm test
+          if [ $? -eq 0 ]; then
+            echo "result=success" >> $GITHUB_OUTPUT
+          else
+            echo "result=failure" >> $GITHUB_OUTPUT
+
+      - name: Archive Allure report
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: allure-report
+
+  comment:
+    needs: tests
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' }}
+
+    steps:
+      - name: Comment PR with test results - GPT version
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const conclusion = '${{ needs.tests.result }}'
+            const success = conclusion === 'success';
+
+            let message = success
+              ? '✔️ **Tests réussis** 🎉\n\nLe rapport Allure est disponible dans les artefacts.'
+              : '❌ **Les tests ont échoué** 😿\n\nLe rapport Allure est disponible dans les artefacts.';
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            })
