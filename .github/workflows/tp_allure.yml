@@ -28,7 +28,7 @@ jobs:
       - name: Run tests with allure
         run: allure run -- npm test
         continue-on-error: true
-      - run: allure generate output/
+      - run: allure generate allure-report/
       - name: Archive Allure report
         uses: actions/upload-artifact@v4
         with:
