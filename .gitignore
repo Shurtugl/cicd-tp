@@ -1,4 +1,5 @@
 allure-report/
+allure-results/
 .aider*
 .allure
 .idea
