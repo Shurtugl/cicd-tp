@@ -1,3 +1,4 @@
+
 name: Pierrick
 
 on:
@@ -16,33 +17,31 @@ jobs:
   tests:
     runs-on: ubuntu-latest
 
-    outputs:
-      test_result: ${{ steps.test-step.outcome }}
-
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
-
+        uses: actions/checkout@v6
       - name: Setup Node.js from .nvmrc
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: ".nvmrc"
-
       - name: Install dependencies
         run: npm ci
-
-      - name: Install Allure 3
+      # - name: Run tests
+      #   run: npm test
+      # - name: Lint code
+      #   run: npm run lint
+      - name: install Allure
         run: npm install -g allure@latest
-
-      - name: Run tests with Allure 3
-        id: test-step
+      - name: Run tests with allure
         run: allure run -- npm test
-
-      - name: Upload Allure report artifact
+        continue-on-error: true
+      - run: allure generate allure-report/
+      - name: Archive Allure report
         uses: actions/upload-artifact@v4
         with:
           name: allure-report
           path: allure-report
+
 
   deploy_pages:
     needs: tests

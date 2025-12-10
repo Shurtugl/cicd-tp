@@ -2,3 +2,6 @@ allure-results/
 .aider*
 .env
 .idea
+.allure
+node_modules
+allure-report
